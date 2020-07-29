@@ -81,7 +81,7 @@ def game():
     while(True):
         rows=int(input('Enter no. of rows (>=4): '))
         columns=int(input('Enter no. of columns (>=4): '))
-        if row>=4 and col>=4:
+        if rows>=4 and columns>=4:
             break
         else:
             print('Enter valid values.')
