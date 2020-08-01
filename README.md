@@ -1,5 +1,5 @@
 # Connect4
-Connect4 board game
+Connect4 board game with AI
 
     For gui version:
         Requirements:
