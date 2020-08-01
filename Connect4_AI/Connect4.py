@@ -116,52 +116,66 @@ def terminal(board):
         return True
     return False
 
+def current_score(window,isMaximising,player):
+    score=0
+    if isMaximising:
+        if window.count(player)==4:
+            score+=1000
+        if window.count(player)==3 and window.count(EMPTY)==1:
+            score+=5
+        if window.count(player)==2 and window.count(EMPTY)==2:
+            score+=2
+        if window.count(player)==0 and window.count(EMPTY)==1:
+            score-=4
+    else:
+        if window.count(player)==4:
+            score-=1000
+        if window.count(player)==3 and window.count(EMPTY)==1:
+            score-=5
+        if window.count(player)==2 and window.count(EMPTY)==2:
+            score-=2
+        if window.count(player)==0 and window.count(EMPTY)==1:
+            score+=4
 
-def eval(board):
+    return score
+
+def eval(board,isMaximising):
     if check_win(board)!=EMPTY:
-        if player(board)==RED:
+        if isMaximising:
             return 1000
         else:
             return -1000
     score=0
-    def row_check(board):
-        score=0
-        for i in board:
-            count_1,count_2=0,0
-            for j in range(len(i)):
-                if i[j]==YELLOW:
-                    count_2+=1
-                elif i[j]==RED:
-                    count_1+=1
-                else:
-                    if j==0 and i[j+1]==RED:
-                        score-=10
-                    if j==0 and i[j+1]==YELLOW:
-                        score+=10
-                    if j==len(i)-1 and i[j-1]==RED:
-                        score-=10
-                    if j==len(i)-1 and i[j-1]==YELLOW:
-                        score+=10
-                    if j>0 and i[j-1]==RED and count_1>count_2:
-                        score-=10
-                    if j>0 and i[j-1]==YELLOW and count_2>count_1:
-                        score+=10
-                    if j<len(i)-1 and i[j+1]==RED and count_1>count_2:
-                        score-=10
-                    if j<len(i)-1 and i[j+1]==YELLOW and count_2>count_1:
-                        score+=10
-        return score
-    trans=[]
-    for i in range(len(board[0])):
-        trans.append([board[j][i] for j in range(len(board))])
-    score+=row_check(trans)
-    score+=row_check(board)
+    if isMaximising:
+        score+=[board[i][columns//2] for i in range(rows)].count(player(board))*3
+    else:
+        score-=[board[i][columns//2] for i in range(rows)].count(player(board))*3
+
+    # horizontal
+    for i in range(rows):
+        for j in range(columns-3):
+            score+=current_score(board[i][j:j+4],isMaximising,player(board))
+    # vertical
+    for i in range(columns):
+        for j in range(rows-3):
+            temp=[board[k][i] for k in range(j,j+4)]
+            score+=current_score(temp,isMaximising,player(board))
+    # diagonal negative
+    for i in range(rows-3):
+        for j in range(columns-3):
+            temp=[board[i+k][j+k] for k in range(4)]
+            score+=current_score(temp,isMaximising,player(board))
+    #diagnol positive
+    for i in range(rows-3):
+        for j in range(columns-3-1,-1,-1):
+            temp=[board[i+k][j-k] for k in range(4)]
+            score+=current_score(temp,isMaximising,player(board))
     return score
 
 
 def minimax(board,depth,alpha,beta,isMaximising):
-    if terminal(board) or depth==2:
-        return eval(board)
+    if terminal(board) or depth==5:
+        return eval(board,isMaximising)
     if isMaximising:
         best_score=-math.inf
         for move in get_move(board):
