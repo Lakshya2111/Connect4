@@ -116,70 +116,58 @@ def terminal(board):
         return True
     return False
 
-def current_score(window,isMaximising,player):
+def current_score(window,player):
+
     score=0
-    if isMaximising:
-        if window.count(player)==4:
-            score+=1000
-        if window.count(player)==3 and window.count(EMPTY)==1:
-            score+=5
-        if window.count(player)==2 and window.count(EMPTY)==2:
-            score+=2
-        if window.count(player)==0 and window.count(EMPTY)==1:
-            score-=4
-    else:
-        if window.count(player)==4:
-            score-=1000
-        if window.count(player)==3 and window.count(EMPTY)==1:
-            score-=5
-        if window.count(player)==2 and window.count(EMPTY)==2:
-            score-=2
-        if window.count(player)==0 and window.count(EMPTY)==1:
-            score+=4
+    if window.count(player)==4:
+        score+=1000
+    if window.count(player)==3 and window.count(EMPTY)==1:
+        score+=5
+    if window.count(player)==2 and window.count(EMPTY)==2:
+        score+=2
+    if window.count(player)==0 and window.count(EMPTY)==1:
+        score-=4
 
     return score
 
-def eval(board,isMaximising):
+def eval(board,player):
     if check_win(board)!=EMPTY:
-        if isMaximising:
+        if check_win(board)==player:
             return 1000
         else:
             return -1000
     score=0
-    if isMaximising:
-        score+=[board[i][columns//2] for i in range(rows)].count(player(board))*3
-    else:
-        score-=[board[i][columns//2] for i in range(rows)].count(player(board))*3
-
-    # horizontal
+    #center
+    score+=[board[i][columns//2] for i in range(rows)].count(player)*3
+    #horizontal
     for i in range(rows):
         for j in range(columns-3):
-            score+=current_score(board[i][j:j+4],isMaximising,player(board))
+            score+=current_score(board[i][j:j+4],player)
     # vertical
     for i in range(columns):
         for j in range(rows-3):
             temp=[board[k][i] for k in range(j,j+4)]
-            score+=current_score(temp,isMaximising,player(board))
+            score+=current_score(temp,player)
     # diagonal negative
     for i in range(rows-3):
         for j in range(columns-3):
             temp=[board[i+k][j+k] for k in range(4)]
-            score+=current_score(temp,isMaximising,player(board))
+            score+=current_score(temp,player)
     #diagnol positive
     for i in range(rows-3):
         for j in range(columns-3-1,-1,-1):
             temp=[board[i+k][j-k] for k in range(4)]
-            score+=current_score(temp,isMaximising,player(board))
+            score+=current_score(temp,player)
     return score
 
 
-def minimax(board,depth,alpha,beta,isMaximising):
+def minimax(board,depth,alpha,beta,isMaximising,ai):
     if terminal(board) or depth==5:
-        return eval(board,isMaximising)
+        return eval(board,ai)
     if isMaximising:
         best_score=-math.inf
         for move in get_move(board):
-            score=minimax(make_move(board,move[0],move[1]),depth+1,alpha,beta,False)
+            score=minimax(make_move(board,move[0],move[1]),depth+1,alpha,beta,False,ai)
             best_score=max(best_score,score)
             alpha=max(alpha,score)
             if beta<=alpha:
@@ -187,7 +175,7 @@ def minimax(board,depth,alpha,beta,isMaximising):
     else:
         best_score=math.inf
         for move in get_move(board):
-            score=minimax(make_move(board,move[0],move[1]),depth+1,alpha,beta,True)
+            score=minimax(make_move(board,move[0],move[1]),depth+1,alpha,beta,True,ai)
             best_score=min(best_score,score)
             beta=min(beta,score)
             if beta<=alpha:
@@ -198,7 +186,7 @@ def AI(board):
     best_score=-math.inf
     best_move=None
     for move in get_move(board):
-        score=minimax(make_move(board,move[0],move[1]),0,-math.inf,math.inf,False)
+        score=minimax(make_move(board,move[0],move[1]),0,-math.inf,math.inf,False,player(board))
         if score>best_score:
             best_score=score
             best_move=move
