@@ -2,6 +2,12 @@ import pygame
 import sys
 import time
 
+import game as C4
+
+pygame.init()
+size = width, height = 700, 700
+
+# Colors
 BLUE=(0,0,255)
 RED=(255,0,0)
 BLACK=(0,0,0)
@@ -10,176 +16,275 @@ WHITE=(255,255,255)
 square_size=100
 radius=int(square_size/2-5)
 
-def create_board(rows,columns):
-    board=[[0]*columns for _ in range(rows)]
-    return board
-    # print_board(board)
+screen = pygame.display.set_mode(size)
+mediumFont = pygame.font.SysFont("calibri", 28)
+largeFont = pygame.font.SysFont("calibri", 40)
+moveFont = pygame.font.SysFont("calibri", 60)
 
-def is_valid_location(board,col):
-    if board[0][col]==0:
-        return True
-    return False
+user = None
+board = C4.create_board()
+ai_turn = False
+ai=True
+while True:
+    flag=0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
 
-def next_row(board,col,rows):
-    for i in range(rows-1,-1,-1):
-        if board[i][col]==0:
-            return i
+    # Let user choose a player.
+    if user is None:
+        screen.fill(BLACK)
+        # Draw title
+        title = largeFont.render("Play Connect4", True, WHITE)
+        titleRect = title.get_rect()
+        titleRect.center = ((width / 2), 50)
+        screen.blit(title, titleRect)
 
-def drop(board,col,turn,rows):
-    value = 2 if turn&1 else 1
-    pos_row=next_row(board,col,rows)
-    board[pos_row][col]=value
+        # Draw buttons
+        playAIButton = pygame.Rect((width / 8), (height / 2), width / 4, 50)
+        playAI = mediumFont.render("Play vs AI", True, BLACK)
+        playAIRect = playAI.get_rect()
+        playAIRect.center = playAIButton.center
+        pygame.draw.rect(screen, WHITE, playAIButton)
+        screen.blit(playAI, playAIRect)
 
-def available(board):
-    for i in board:
-        for j in i:
-            if j==0:
-                return True
-    return False
+        playHButton = pygame.Rect(5 * (width / 9), (height / 2), width / 3, 50)
+        playH = mediumFont.render("Play vs Human", True, BLACK)
+        playHRect = playH.get_rect()
+        playHRect.center = playHButton.center
+        pygame.draw.rect(screen, WHITE, playHButton)
+        screen.blit(playH, playHRect)
 
-def check_win(board,turn,rows,columns):
-    check = 2 if turn&1 else 1
-    #horizontal
-    for i in range(rows):
-        count=0
-        for j in range(columns):
-            if board[i][j]==check:
-                count+=1
-                if count==4:
-                    return True
-            else:
-                count=0
-    #vertical
-    for i in range(columns):
-        count=0
-        for j in range(rows):
-            if board[j][i]==check:
-                count+=1
-                if count==4:
-                    return True
-            else:
-                count=0
-    #diagnol negative slope
-    for i in range(rows-3):
-        for j in range(columns-3):
-            flag=1
-            for k in range(4):
-                if board[i+k][j+k]!=check:
-                    flag=0
+        quitButton = pygame.Rect(10,30,width/5,50)
+        quit = mediumFont.render('Quit',True,BLACK)
+        quitRect = quit.get_rect()
+        quitRect.center = quitButton.center
+        pygame.draw.rect(screen, WHITE, quitButton)
+        screen.blit(quit, quitRect)
+
+        for event in pygame.event.get():
+            if event.type==pygame.MOUSEBUTTONDOWN:
+
+                mouse = event.pos
+                if playAIButton.collidepoint(mouse):
+                    flag=1
                     break
-            if flag==1:
-                return True
-    #diagnol positive slope
-    for i in range(rows-3):
-        for j in range(3,columns):
-            flag=1
-            for k in range(4):
-                if board[i+k][j-k]!=check:
-                    flag=0
+
+                elif playHButton.collidepoint(mouse):
+                    flag=2
                     break
-            if flag==1:
-                return True
-    return False
 
-def print_board(board):
-    print()
-    for i in board:
-        print(*i)
-    # print('-'*columns)
+                elif quitButton.collidepoint(mouse):
+                    sys.exit()
+        if flag==1:
+            ai=True
+            screen.fill(BLACK)
+            # Draw title
+            title = largeFont.render("Play Connect4", True, WHITE)
+            titleRect = title.get_rect()
+            titleRect.center = ((width / 2), 50)
+            screen.blit(title, titleRect)
 
-def game():
-    pygame.init()
-    myfont=pygame.font.SysFont('monospace',75)
-    while(True):
-        rows=int(input('Enter no. of rows (>=4): '))
-        columns=int(input('Enter no. of columns (>=4): '))
-        if rows>=4 and columns>=4:
-            break
-        else:
-            print('Enter valid values.')
-    width=columns*square_size
-    height=(rows+1)*square_size
-    size=(width,height)
-    screen=pygame.display.set_mode(size)
+            playRedButton = pygame.Rect((width / 8), (height / 2), width / 4, 50)
+            playRed = mediumFont.render("Play as RED", True, RED)
+            playRedRect = playRed.get_rect()
+            playRedRect.center = playRedButton.center
+            pygame.draw.rect(screen, YELLOW, playRedButton)
+            screen.blit(playRed, playRedRect)
 
-    def draw_board(board):
-        for c in range(columns):
-            for r in range(rows):
+            playYellowButton = pygame.Rect(5 * (width / 9), (height / 2), width / 3, 50)
+            playYellow = mediumFont.render("Play as YELLOW", True, YELLOW)
+            playYellowRect = playYellow.get_rect()
+            playYellowRect.center = playYellowButton.center
+            pygame.draw.rect(screen, RED, playYellowButton)
+            screen.blit(playYellow, playYellowRect)
+
+            quitButton = pygame.Rect(10,30,width/5,50)
+            quit = mediumFont.render('Quit',True,BLACK)
+            quitRect = quit.get_rect()
+            quitRect.center = quitButton.center
+            pygame.draw.rect(screen, WHITE, quitButton)
+            screen.blit(quit, quitRect)
+            pygame.display.update()
+
+            while user==None:
+                for event in pygame.event.get():
+                    if event.type==pygame.MOUSEBUTTONDOWN:
+
+                        mouse = event.pos
+                        if playRedButton.collidepoint(mouse):
+                            user = C4.RED
+                            user_color=RED
+                            ai_color=YELLOW
+                            break
+                        elif playYellowButton.collidepoint(mouse):
+                            user = C4.YELLOW
+                            user_color=YELLOW
+                            ai_color=RED
+                            break
+                        elif quitButton.collidepoint(mouse):
+                            sys.exit()
+
+        if flag==2:
+            user = C4.RED
+            user_color = RED
+            player2 = C4.YELLOW
+            player2_color = YELLOW
+            ai=False
+
+
+    else:
+        game_over = C4.terminal(board)
+        player = C4.player(board)
+        for c in range(C4.columns):
+            for r in range(C4.rows):
                 pygame.draw.rect(screen, BLUE, (c*square_size, r*square_size+square_size, square_size, square_size))
                 pygame.draw.circle(screen, BLACK, (c*square_size+square_size//2, r*square_size+square_size+square_size//2), radius)
 
-        for c in range(columns):
-            for r in range(rows):
-                if board[r][c] == 1:
+        for c in range(C4.columns):
+            for r in range(C4.rows):
+                if board[r][c] == C4.RED:
                     pygame.draw.circle(screen, RED, (c*square_size+square_size//2, r*square_size+square_size+square_size//2), radius)
-                elif board[r][c] == 2:
+                elif board[r][c] == C4.YELLOW:
                     pygame.draw.circle(screen, YELLOW, (c*square_size+square_size//2, r*square_size+square_size+square_size//2), radius)
-        pygame.display.update()
 
-    board=create_board(rows,columns)
-    print_board(board)
-    draw_board(board)
-    game_over=False
-    turn=0
+        pygame.display.flip()
 
-    while not game_over:
+        if game_over:
+            pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
 
-        for event in pygame.event.get():
-            if event.type==pygame.QUIT:
-                sys.exit()
-            if event.type==pygame.MOUSEMOTION:
+            winner = C4.check_win(board)
+            if ai:
+                if winner is None:
+                    title = f"Game Over: Tie."
+                else:
+                    if winner==user:
+                        winner='You'
+                        winner_color=user_color
+                    else:
+                        winner='AI'
+                        winner_color=ai_color
+                    title = f"{winner} won."
+            else:
+                if winner is None:
+                    title = f"Game Over: Tie."
+                else:
+                    if winner==user:
+                        winner='Player1'
+                        winner_color=RED
+                    else:
+                        winner='Player2'
+                        winner_color=YELLOW
+                    title = f"{winner} won."
+            title = largeFont.render(title, True, winner_color)
+            titleRect = title.get_rect()
+            titleRect.center = (width//2, 50)
+            screen.blit(title, titleRect)
+
+        # Check for AI move
+        if user != player and not game_over and ai:
+            if ai_turn:
                 pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
-                posx=event.pos[0]
-                if turn&1==0:
-                    pygame.draw.circle(screen,RED,(posx,square_size//2),radius)
-                else:
-                    pygame.draw.circle(screen,YELLOW,(posx,square_size//2),radius)
-            pygame.display.update()
+                title="AI thinking..."
+                title = largeFont.render(title, True, ai_color)
+                titleRect = title.get_rect()
+                titleRect.center = (width//2, 50)
+                screen.blit(title, titleRect)
+                pygame.display.flip()
+                time.sleep(0.5)
+                (row,col) = C4.AI(board)
+                board = C4.make_move(board,row,col)
+                pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
+                title="Your Turn..."
+                title = largeFont.render(title, True, user_color)
+                titleRect = title.get_rect()
+                titleRect.center = (width//2, 50)
+                screen.blit(title, titleRect)
+                pygame.display.flip()
 
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                pygame.draw.rect(screen, BLACK, (0,0, width, square_size))
+                if C4.terminal(board):
+                    pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
+                    pygame.display.flip()
 
-                col=event.pos[0]//square_size
+                ai_turn = False
+            else:
+                ai_turn = True
 
-                if is_valid_location(board,col):
-                    drop(board,col,turn,rows)
+        ok=0
+        if not ai and not game_over:
+            pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
+            title="Player1 Turn..."
+            title = largeFont.render(title, True, user_color)
+            titleRect = title.get_rect()
+            titleRect.center = (width//2, 50)
+            screen.blit(title, titleRect)
+            pygame.display.flip()
+        while user==player and ok==0 and not game_over:
+            for event in pygame.event.get():
+                if event.type==pygame.MOUSEMOTION:
+                    pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
+                    posx=event.pos[0]
+                    if user==C4.player(board):
+                        pygame.draw.circle(screen,user_color,(posx,square_size//2),radius)
 
-                    if check_win(board,turn,rows,columns):
-                        game_over=True
-                        print_board(board)
-                        draw_board(board)
-                        break
+                pygame.display.flip()
+                if event.type==pygame.MOUSEBUTTONDOWN and not game_over:
+                    col = event.pos[0]//square_size
+                    row = C4.next_row(board,col)
+                    board = C4.make_move(board,row,col)
+                    ok=1
+                    break
+        if not ai:
+            ok=0
+            game_over = C4.terminal(board)
+            if not game_over:
+                pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
+                title="Player2 Turn..."
+                title = largeFont.render(title, True, player2_color)
+                titleRect = title.get_rect()
+                titleRect.center = (width//2, 50)
+                screen.blit(title, titleRect)
+                pygame.display.flip()
 
-
-                    if not available(board):
+            while player2==player and ok==0 and not game_over:
+                for event in pygame.event.get():
+                    if event.type==pygame.MOUSEMOTION:
                         pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
-                        pygame.display.update()
-                        label=myfont.render('Game Draw',1,WHITE)
-                        screen.blit(label,(40,10))
-                        draw_board(board)
-                        game_over=True
-                        again=input('Play again Y/N: ')
-                        return again
-                else:
-                    print('Enter valid location...')
-                    continue
-                draw_board(board)
-                print_board(board)
-                turn^=1
+                        posx=event.pos[0]
+                        if player2==C4.player(board):
+                            pygame.draw.circle(screen,player2_color,(posx,square_size//2),radius)
 
-    player = 2 if turn&1 else 1
-    color = YELLOW if turn&1 else RED
-    pygame.draw.rect(screen,BLACK,(0,0,width,square_size))
-    pygame.display.update()
-    label=myfont.render(f'Player {player} wins!!',1,color)
-    screen.blit(label,(40,10))
-    draw_board(board)
-    print()
-    print(f'Player {player} wins...!!!')
-    again=input('Play again Y/N: ')
-    return again
-while(True):
-    again=game()
-    if again=='Y':
-        continue
-    break
+                    pygame.display.flip()
+                    if event.type==pygame.MOUSEBUTTONDOWN and not game_over:
+                        col = event.pos[0]//square_size
+                        row = C4.next_row(board,col)
+                        board = C4.make_move(board,row,col)
+                        ok=1
+                        break
+        if game_over:
+            againButton = pygame.Rect(width-150, 30, width / 5, 50)
+            again = mediumFont.render("Play Again", True, BLACK)
+            againRect = again.get_rect()
+            againRect.center = againButton.center
+            pygame.draw.rect(screen, WHITE, againButton)
+            screen.blit(again, againRect)
+
+            quitButton = pygame.Rect(10,30,width/5,50)
+            quit = mediumFont.render('Quit',True,BLACK)
+            quitRect = quit.get_rect()
+            quitRect.center = quitButton.center
+            pygame.draw.rect(screen, WHITE, quitButton)
+            screen.blit(quit, quitRect)
+            click, _, _ = pygame.mouse.get_pressed()
+            if click == 1:
+                mouse = pygame.mouse.get_pos()
+                if againButton.collidepoint(mouse):
+                    time.sleep(0.2)
+                    user = None
+                    board = C4.create_board()
+                    ai_turn = False
+                    screen.fill(BLACK)
+                if quitButton.collidepoint(mouse):
+                    sys.exit()
+
+    pygame.display.flip()
